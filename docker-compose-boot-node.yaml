@@ -1,0 +1,101 @@
+version: "3"
+
+volumes:
+  poet-shared:
+
+services:
+
+  shell:
+    container_name: sawtooth-shell-default
+    build:
+      context: docker/shell
+    networks:
+      - main-net
+
+  boot-node-validator:
+    container_name: boot-node-validator
+    build:
+      context: docker/boot-node/validator
+    volumes:
+      - poet-shared:/poet-shared
+    environment:
+      validator: boot-node-validator
+    command: bash start.sh
+    ports:
+      - "4004:4004"
+    networks:
+      - main-net
+
+  poet-engine-boot-node:
+    container_name: poet-engine-boot-node
+    build:
+      context: docker/boot-node/poet-engine
+    environment:
+      validator: boot-node-validator
+    volumes:
+      - poet-shared:/poet-shared
+    command: bash start.sh
+    networks:
+      - main-net
+
+  rest-api-boot-node:
+    container_name: rest-api-boot-node
+    build:
+      context: docker/rest-api
+    environment:
+      validator: boot-node-validator
+      id: boot-node
+    ports:
+      - "8008:8008"
+    depends_on:
+      - "boot-node-validator"
+    networks:
+      - main-net
+
+  settings-tp-boot-node:
+    container_name: settings-tp-boot-node
+    build:
+      context: docker/settings-tp
+    environment:
+      validator: boot-node-validator
+    depends_on:
+      - "boot-node-validator"
+    networks:
+      - main-net
+
+  identity-tp-boot-node:
+    container_name: identity-tp-boot-node
+    build:
+      context: docker/identity-tp
+    environment:
+      validator: boot-node-validator
+    depends_on:
+      - "boot-node-validator"
+    networks:
+      - main-net
+
+  java-tp-boot-node:
+    container_name: java-tp-boot-node
+    build:
+      context: docker/java-tp
+    environment:
+      validator: boot-node-validator
+    depends_on:
+      - "boot-node-validator"
+    networks:
+      - main-net
+
+  poet-validator-registry-tp-boot-node:
+    container_name: poet-validator-registry-tp-boot-node
+    build:
+      context: docker/poet-validator-registry-tp
+    environment:
+      validator: boot-node-validator
+    depends_on:
+      - "boot-node-validator"
+    networks:
+      - main-net
+
+networks:
+  main-net:
+    driver: bridge

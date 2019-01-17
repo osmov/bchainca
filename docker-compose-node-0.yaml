@@ -1,0 +1,92 @@
+version: "3"
+
+volumes:
+  poet-shared:
+
+services:
+
+  validator-0:
+    container_name: validator-0
+    build:
+      context: docker/validator
+    volumes:
+      - poet-shared:/poet-shared
+    environment:
+      validator: validator-0
+      validator_seed: boot-node-validator
+    command: bash start.sh
+    networks:
+      - benchmark-starter_main-net
+
+  poet-engine-0:
+    container_name: poet-engine-0
+    build:
+      context: docker/poet-engine
+    environment:
+      validator: validator-0
+    volumes:
+      - poet-shared:/poet-shared
+    command: bash start.sh
+    networks:
+      - benchmark-starter_main-net
+
+  rest-api-0:
+    container_name: rest-api-0
+    build:
+      context: docker/rest-api
+    environment:
+      validator: validator-0
+      id: 0
+    depends_on:
+      - validator-0
+    networks:
+      - benchmark-starter_main-net
+
+  settings-tp-0:
+    container_name: settings-tp-0
+    build:
+      context: docker/settings-tp
+    environment:
+      validator: validator-0
+    depends_on:
+      - validator-0
+    networks:
+      - benchmark-starter_main-net
+
+  identity-tp-0:
+    container_name: identity-tp-0
+    build:
+      context: docker/identity-tp
+    environment:
+      validator: validator-0
+    depends_on:
+      - validator-0
+    networks:
+      - benchmark-starter_main-net
+
+  java-tp-0:
+    container_name: java-tp-0
+    build:
+      context: docker/java-tp
+    environment:
+      validator: validator-0
+    depends_on:
+      - validator-0
+    networks:
+      - benchmark-starter_main-net
+
+
+  poet-validator-registry-tp-0:
+    container_name: poet-validator-registry-tp-0
+    build:
+      context: docker/poet-validator-registry-tp
+    environment:
+      validator: validator-0
+    depends_on:
+      - validator-0
+    networks:
+      - benchmark-starter_main-net
+
+networks:
+  benchmark-starter_main-net:
+    external: true
