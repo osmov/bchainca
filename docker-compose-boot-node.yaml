@@ -20,6 +20,7 @@ services:
       - poet-shared:/poet-shared
     environment:
       validator: boot-node-validator
+      RUST_BACKTRACE: 1
     command: bash start.sh
     ports:
       - "4004:4004"

@@ -68,10 +68,10 @@ class CaClient:
             auth_user=auth_user,
             auth_password=auth_password)
 
-    def init(self, pkey, wait=None, auth_user=None, auth_password=None):
+    def init(self, pkey, csr, wait=None, auth_user=None, auth_password=None):
         return self._send_ca_txn(
             "init",
-            value=pkey,
+            value=pkey+csr,
             wait=wait,
             auth_user=auth_user,
             auth_password=auth_password)

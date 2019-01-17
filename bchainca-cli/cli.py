@@ -785,9 +785,9 @@ def do_create(args):
     pkey = create_key_pair()
     csr = create_cert_request(pkey,
                               C=u'RU',
-                              ST=u'Tatarstan',
-                              L=u'Innopolis',
-                              O=u'SNE',
+                              ST=u'Moscow',
+                              L=u'Moscow',
+                              O=u'CWT',
                               CN=name,
                               emailAddress=name)
 
@@ -925,6 +925,8 @@ def do_list_approve(args):
 
     print("Response: {}".format(response))
 
+    client.subscribe('list_approve')
+
 
 def do_init(args):
     # name = args.name
@@ -936,6 +938,16 @@ def do_init(args):
          encryption_algorithm=serialization.BestAvailableEncryption(b'passw'),
      ).decode('utf-8')
 
+    csr = create_cert_request(pkey,
+                              C=u'RU',
+                              ST=u'Moscow',
+                              L=u'Moscow',
+                              O=u'CWT',
+                              CN=u'demo CA',
+                              emailAddress=u'admin@cwryptoworkplace.io')
+
+    csr = csr.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+
     url = _get_url(args)
     keyfile = _get_keyfile(args)
     auth_user, auth_password = _get_auth_info(args)
@@ -944,12 +956,12 @@ def do_init(args):
 
     if args.wait and args.wait > 0:
         response = client.init(
-            data, wait=args.wait,
+            data, csr, wait=args.wait,
             auth_user=auth_user,
             auth_password=auth_password)
     else:
         response = client.init(
-            data, auth_user=auth_user,
+            data, csr, auth_user=auth_user,
             auth_password=auth_password)
 
     print("Response: {}".format(response))

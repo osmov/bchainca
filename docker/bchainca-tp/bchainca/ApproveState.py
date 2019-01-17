@@ -28,7 +28,10 @@ class ApproveItem:
         return self._signer
 
     def toJSON(self):
-        return {'date': self._date, 'nonce': self._nonce, 'signer': self._signer, 'csr': self._csr.encode()}
+        return {'date': self._date.strftime("%Y-%m-%d %H:%M:%S"),
+                'nonce': self._nonce,
+                'signer': self._signer,
+                'csr': self._csr.decode('utf-8')}
 
 class ApproveState(State):
     def __init__(self, context, namespace, timeout):

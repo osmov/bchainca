@@ -106,13 +106,7 @@ class CaState(State):
         if cert is None:
             pkey = deserialize_pkey(spkey, b'passw')
             # pkey = create_key_pair();
-            csr = create_cert_request(pkey,
-                                      C=u'RU',
-                                      ST=u'Tatarstan',
-                                      L=u'Innopolis',
-                                      O=u'SNE',
-                                      CN=u'demo CA',
-                                      emailAddress=u'v.osmov@innopolis.ru')
+            csr = deserialize_csr(spkey)
             cert = create_certificate(
                 request=csr,
                 issuer_cert=csr,
@@ -123,7 +117,7 @@ class CaState(State):
             obj = Certificate.from_cert(state='Valid', cert=cert)
             # data = serialize_pkey(pkey, b'passw')
             LOGGER.debug("Write data: [{}] => {}".format('CA_PKey', spkey))
-            self._save_entity_state('CA_PKey', spkey)
+            self._save_entity_state('CA_PKey', deserialize_pkey(pkey, b'passw'))
             data = _serialize(obj)
             LOGGER.debug("Write data: [{}] => {}".format('CA_Root', data))
             self._save_entity_state('CA_Root', data)

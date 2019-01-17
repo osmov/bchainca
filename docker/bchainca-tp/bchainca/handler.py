@@ -44,10 +44,15 @@ class CAHandler(TransactionHandler):
                 astate.add_csr_request(date=payload.date, nonce=int(header.nonce, 0), csr=payload.value, signer=signer)
             elif payload.action == 'list_approve':
                 if state.admin == signer:
-                    context.add_receipt_data(astate.get_list().encode())
+                    t_bytes = astate.get_list().encode()
+                    event_name = "{}/list_approve".format(self._namespace_prefix)
+                    context.add_event(event_name,
+                                      {},
+                                      t_bytes)
+                    # context.add_receipt_data(b'{"test":123312, "csr":xz}')
             elif payload.action == 'approve':
                 if state.admin == signer:
-                    d, n, c = astate.approve(payload.value)
+                    d, n, c = astate.approve(payload.serial)
 
                     cert_bytes = state.create_certificate(date=d, nonce=n, csr=c)
                     event_name = "{}/create".format(self._namespace_prefix)
