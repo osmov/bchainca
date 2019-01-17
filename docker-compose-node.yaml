@@ -64,6 +64,17 @@ services:
     networks:
       - NET_main-net
 
+  bchainca-tp-TAG:
+    container_name: bchainca-tp-TAG
+    build:
+      context: docker/bchainca-tp
+    environment:
+      validator: validator-TAG
+    depends_on:
+      - validator-TAG
+    networks:
+      - NET_main-net
+
   java-tp-TAG:
     container_name: java-tp-TAG
     build:

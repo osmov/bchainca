@@ -74,6 +74,17 @@ services:
     networks:
       - main-net
 
+  bchainca-tp-boot-node:
+    container_name: bchainca-tp-boot-node
+    build:
+      context: docker/bchainca-tp
+    environment:
+      validator: boot-node-validator
+    depends_on:
+      - "boot-node-validator"
+    networks:
+      - main-net
+
   java-tp-boot-node:
     container_name: java-tp-boot-node
     build:
