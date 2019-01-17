@@ -1,0 +1,2 @@
+class CaException(Exception):
+    pass
