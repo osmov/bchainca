@@ -68,10 +68,10 @@ class CaClient:
             auth_user=auth_user,
             auth_password=auth_password)
 
-    def init(self, pkey, csr, wait=None, auth_user=None, auth_password=None):
+    def init(self, pkey, wait=None, auth_user=None, auth_password=None):
         return self._send_ca_txn(
             "init",
-            value=pkey+csr,
+            value=pkey,
             wait=wait,
             auth_user=auth_user,
             auth_password=auth_password)
@@ -103,21 +103,6 @@ class CaClient:
         return self._send_ca_txn(
             "revoke",
             value=serial,
-            wait=wait,
-            auth_user=auth_user,
-            auth_password=auth_password)
-
-    def approve(self, signer: str, wait=None, auth_user=None, auth_password=None):
-        return self._send_ca_txn(
-            "approve",
-            value=signer,
-            wait=wait,
-            auth_user=auth_user,
-            auth_password=auth_password)
-
-    def list_approve(self, wait=None, auth_user=None, auth_password=None):
-        return self._send_ca_txn(
-            "list_approve",
             wait=wait,
             auth_user=auth_user,
             auth_password=auth_password)

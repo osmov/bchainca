@@ -25,14 +25,11 @@ def parse_args(args):
 
     return parser.parse_args(args)
 
-
-
-def main(args=None):
-
+def main():
     if args is None:
         args = sys.argv[1:]
     opts = parse_args(args)
-    processor = None 
+    processor = None
 
     try:
         # In docker, the url would be the validator's container name with

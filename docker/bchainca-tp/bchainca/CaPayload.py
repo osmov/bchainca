@@ -9,7 +9,7 @@ class CaPayload(object):
     def __init__(self, payload):
         action, date, _ = payload.decode().split("|")
 
-        if action not in ('create','init', 'get', 'list_approve', 'approve', 'revoke', 'status'):
+        if action not in ('create','init', 'get', 'revoke', 'status'):
             raise InvalidTransaction('Invalid action: {}'.format(action))
 
         if action in ('create', 'init'):

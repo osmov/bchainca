@@ -89,9 +89,5 @@ def deserialize_certificate(data):
     return x509.load_pem_x509_certificate(data, default_backend())
 
 
-def deserialize_csr(data):
-    return  x509.load_pem_x509_csr(data, default_backend())
-
-
 def deserialize_pkey(data, passphrase):
     return serialization.load_pem_private_key(data=data, password=passphrase, backend=default_backend())

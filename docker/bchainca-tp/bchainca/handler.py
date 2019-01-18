@@ -4,7 +4,6 @@ from sawtooth_sdk.processor.exceptions import InvalidTransaction, InternalError
 from sawtooth_sdk.processor.handler import TransactionHandler
 from sawtooth_sdk.protobuf.processor_pb2 import TpProcessRequest
 
-from ApproveState import ApproveState
 from CaPayload import CaPayload
 from CaState import CaState
 
@@ -34,34 +33,20 @@ class CAHandler(TransactionHandler):
         signer = header.signer_public_key
         try:
             state = CaState(context=context, namespace=self._namespace_prefix, timeout=2)
-            astate = ApproveState(context=context, namespace=self._namespace_prefix, timeout=2)
             # state.check_CA_cert()
             payload = CaPayload(payload=transaction.payload)
 
             if payload.action == 'init':
-                state.init_CA_cert(date=payload.date, nonce=int(header.nonce, 0), spkey=payload.value, signer=signer)
+                state.init_CA_cert(date=payload.date, nonce=int(header.nonce, 0), spkey=payload.value)
             elif payload.action == 'create':
-                astate.add_csr_request(date=payload.date, nonce=int(header.nonce, 0), csr=payload.value, signer=signer)
-            elif payload.action == 'list_approve':
-                if state.admin == signer:
-                    t_bytes = astate.get_list().encode()
-                    event_name = "{}/list_approve".format(self._namespace_prefix)
-                    context.add_event(event_name,
-                                      {},
-                                      t_bytes)
-                    # context.add_receipt_data(b'{"test":123312, "csr":xz}')
-            elif payload.action == 'approve':
-                if state.admin == signer:
-                    d, n, c = astate.approve(payload.serial)
-
-                    cert_bytes = state.create_certificate(date=d, nonce=n, csr=c)
-                    event_name = "{}/create".format(self._namespace_prefix)
-                    LOGGER.debug("fire event " + event_name)
-                    context.add_event(event_name,
-                                      {"serial": "{}".format(header.nonce)}.items(),
-                                      cert_bytes)
-                    LOGGER.debug("event {} fired".format(event_name))
-
+                cert_bytes = state.create_certificate(date=payload.date, nonce=int(header.nonce, 0), csr=payload.value)
+                event_name = "{}/create".format(self._namespace_prefix)
+                LOGGER.debug("fire event " + event_name)
+                context.add_event(event_name,
+                                  {"serial": "{}".format(header.nonce)}.items(),
+                                  cert_bytes)
+                LOGGER.debug("event {} fired".format(event_name))
+                # context.add_receipt_data(cert_bytes)
             elif payload.action == 'get':
                 cert_bytes = state.get_certificate(payload.serial)
                 event_name = "{}/get".format(self._namespace_prefix)
