@@ -5,7 +5,7 @@ SNE RP1 Blockchain PKI on Sawtooth
 
 Start the first node:
 
-$ docker-compose -f boot-node.yaml up -d
+```$ docker-compose -f boot-node.yaml up -d```
 
 Start other node (PoET engine rqured at least three additional nodes:
 
