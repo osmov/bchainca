@@ -4,12 +4,10 @@ SNE RP1 Blockchain PKI on Sawtooth
 # Run Sawtooth test network
 
 Start the first node:
-
 ```$ docker-compose -f boot-node.yaml up -d```
 
 Start other node (PoET engine rqured at least three additional nodes:
-
-$ docker-compose -f node-0.yaml -f node-1.yaml -f node-2.yaml up -d
+```$ docker-compose -f node-0.yaml -f node-1.yaml -f node-2.yaml up -d```
 
 Each node contains several services: validator, rest-api and set of transaction processors - settings, identity, poet engine, poet validator registry, and bchainca. 
 
