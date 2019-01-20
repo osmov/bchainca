@@ -7,7 +7,6 @@ from sawtooth_sdk.processor.log import log_configuration
 from sawtooth_sdk.processor.config import get_log_dir
 from handler import CAHandler
 
-
 def parse_args(args):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter)
@@ -26,10 +25,11 @@ def parse_args(args):
     return parser.parse_args(args)
 
 def main(args=None):
+
     if args is None:
         args = sys.argv[1:]
     opts = parse_args(args)
-    processor = None
+    processor = None 
 
     try:
         # In docker, the url would be the validator's container name with

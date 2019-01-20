@@ -25,7 +25,6 @@ from sawtooth_sdk.protobuf.validator_pb2 import Message
 from sawtooth_xo.xo_exceptions import XoException
 import datetime
 
-
 def _sha512(data):
     return hashlib.sha512(data).hexdigest()
 
@@ -68,10 +67,18 @@ class CaClient:
             auth_user=auth_user,
             auth_password=auth_password)
 
-    def init(self, pkey, wait=None, auth_user=None, auth_password=None):
+    def list_my(self, wait=None, auth_user=None, auth_password=None):
+        return self._send_ca_txn(
+            "list_my",
+            wait=wait,
+            auth_user=auth_user,
+            auth_password=auth_password)
+
+    def init(self, pkey, csr, wait=None, auth_user=None, auth_password=None):
+        splitter = '|'
         return self._send_ca_txn(
             "init",
-            value=pkey,
+            value=pkey+splitter+csr,
             wait=wait,
             auth_user=auth_user,
             auth_password=auth_password)
@@ -103,6 +110,21 @@ class CaClient:
         return self._send_ca_txn(
             "revoke",
             value=serial,
+            wait=wait,
+            auth_user=auth_user,
+            auth_password=auth_password)
+
+    def approve(self, signer: str, wait=None, auth_user=None, auth_password=None):
+        return self._send_ca_txn(
+            "approve",
+            value=signer,
+            wait=wait,
+            auth_user=auth_user,
+            auth_password=auth_password)
+
+    def list_approve(self, wait=None, auth_user=None, auth_password=None):
+        return self._send_ca_txn(
+            "list_approve",
             wait=wait,
             auth_user=auth_user,
             auth_password=auth_password)
@@ -325,13 +347,14 @@ class CaClient:
             subscriptions=[subscription]).SerializeToString()
 
         # Construct the message wrapper
-        correlation_id = "123"  # This must be unique for all in-process requests
+        correlation_id = str(random.randrange(10000))   # This must be unique for all in-process requests
         msg = Message(
             correlation_id=correlation_id,
             message_type=Message.CLIENT_EVENTS_SUBSCRIBE_REQUEST,
             content=request)
 
         # Send the request
+        print('subscribe to {} event'.format(event_name))
         socket.send_multipart([msg.SerializeToString()])
 
         # Receive the response
@@ -344,7 +367,7 @@ class CaClient:
         # Validate the response type
         if msg.message_type != Message.CLIENT_EVENTS_SUBSCRIBE_RESPONSE:
             print("Unexpected message type")
-            return
+            return ''
 
         # Parse the response
         response = ClientEventsSubscribeResponse()
@@ -353,7 +376,7 @@ class CaClient:
         # Validate the response status
         if response.status != ClientEventsSubscribeResponse.OK:
             print("Subscription failed: {}".format(response.response_message))
-            return
+            return ''
 
         resp = socket.recv_multipart()[-1]
 
@@ -364,13 +387,14 @@ class CaClient:
         # Validate the response type
         if msg.message_type != Message.CLIENT_EVENTS:
             print("Unexpected message type")
-            return
+            return ''
 
         # Parse the response
         events = EventList()
         events.ParseFromString(msg.content)
 
         for event in events.events:
+            print(event)
             if event.data is not None:
                 if is_write_to_file:
                     write_to_file(file_name, event.data)
@@ -381,7 +405,7 @@ class CaClient:
         request = ClientEventsUnsubscribeRequest().SerializeToString()
 
         # Construct the message wrapper
-        correlation_id = "124"  # This must be unique for all in-process requests
+        correlation_id = str(random.randrange(10000))  # This must be unique for all in-process requests
         msg = Message(
             correlation_id=correlation_id,
             message_type=Message.CLIENT_EVENTS_UNSUBSCRIBE_REQUEST,
@@ -411,4 +435,6 @@ class CaClient:
 
         # Close the connection to the validator
         socket.close()
+
+        return file_name
 

@@ -1,19 +1,12 @@
 import datetime
-import hashlib
-import pickle
-import logging
 
 from sawtooth_sdk.processor.exceptions import InternalError
+
+from state import *
 from certgen import *
+from state import _serialize, _deserialize
 
-LOGGER = logging.getLogger(__name__)
-
-def _serialize(obj):
-    return pickle.dumps(obj)
-
-
-def _deserialize(data):
-    return pickle.loads(data)
+PWD = b'passw'
 
 
 class Certificate:
@@ -96,7 +89,7 @@ class Certificate:
         self._state = 'Revoked'
 
 
-class CaState:
+class CaState(State):
     def __init__(self, context, namespace, timeout):
         """Constructor.
         Args:
@@ -104,33 +97,14 @@ class CaState:
                 validator state from within the transaction processor.
             timeout (int): Timeout in seconds.
         """
+        State.__init__(self, context, namespace, timeout)
 
-        self._context = context
-        self._address_cache = {}
-        self._timeout = int(timeout)
-        self._namespace = namespace
-
-    def _generate_address(self, entity):
-        try:
-            return hashlib.sha512(self._namespace.encode('utf-8')).hexdigest()[:6] + \
-                   hashlib.sha512(entity).hexdigest()[:64]
-        except TypeError:
-            return hashlib.sha512(self._namespace.encode('utf-8')).hexdigest()[:6] + \
-                   hashlib.sha512(entity.encode('utf-8')).hexdigest()[:64]
-
-    def init_CA_cert(self, date, nonce: int, spkey):
+    def init_CA_cert(self, date, nonce: int, spkey, csr, signer):
         cert = self._load_entity_state('CA_Root')
-        LOGGER.debug("Input data: [{}] => {}".format('pkey', spkey))
+        LOGGER.debug("[init_CA_cert] Input data: [{}] => {}".format('pkey', spkey))
         if cert is None:
-            pkey = deserialize_pkey(spkey, b'passw')
-            # pkey = create_key_pair();
-            csr = create_cert_request(pkey,
-                                      C=u'RU',
-                                      ST=u'Tatarstan',
-                                      L=u'Innopolis',
-                                      O=u'SNE',
-                                      CN=u'demo CA',
-                                      emailAddress=u'v.osmov@innopolis.ru')
+            pkey = deserialize_pkey(spkey, PWD)
+            csr = deserialize_csr(csr)
             cert = create_certificate(
                 request=csr,
                 issuer_cert=csr,
@@ -138,50 +112,15 @@ class CaState:
                 not_before=date,
                 not_after=date + datetime.timedelta(days=10),
                 serial=nonce)
-            # data = serialize_pkey(pkey, b'passw')
-            LOGGER.debug("Write data: [{}] => {}".format('CA_PKey', spkey))
+            obj = Certificate.from_cert(state='Valid', cert=cert)
             self._save_entity_state('CA_PKey', spkey)
-            data = serialize_certificate(cert)
-            LOGGER.debug("Write data: [{}] => {}".format('CA_Root', data))
-            self._save_entity_state('CA_Root', data)
-
-    def _load_CA_cert(self):
-        data = self._load_entity_state('CA_Root')
-        if data is None:
-            raise InternalError("CA Root certificate not found. Init first")
-        return deserialize_certificate(data)
-
-    def _load_CA_pkey(self):
-        data = self._load_entity_state('CA_PKey')
-        if data is None:
-            raise InternalError("CA keys not found. Init first")
-        return deserialize_pkey(data, b'passw')
-
-    def _save_entity_state(self, entity, data):
-        address = self._generate_address(entity);
-        self._address_cache[address] = data
-        self._context.set_state(
-            {address: data},
-            timeout=self._timeout)
-
-    def _load_entity_state(self, entity):
-        address = self._generate_address(entity);
-        data = None
-        if address in self._address_cache:
-            if self._address_cache[address]:
-                data = self._address_cache[address]
-        else:
-            state_entries = self._context.get_state(
-                [address],
-                timeout=self._timeout)
-            if state_entries:
-                self._address_cache[address] = state_entries[0].data
-                data = state_entries[0].data
-            else:
-                self._address_cache[address] = None
-        return data
+            self._save_entity_state('CA_Root', _serialize(obj))
+            self.set_admin(signer)
 
     def create_certificate(self, date: datetime.datetime, nonce: int, csr: bytes):
+        LOGGER.debug("[create_certificate] Input data: [{}] => {}".format('date', date))
+        LOGGER.debug("[create_certificate] Input data: [{}] => {}".format('nonce', nonce))
+        LOGGER.debug("[create_certificate] Input data: [{}] => {}".format('csr', csr))
         ca_cert = self._load_CA_cert()
         ca_pkey = self._load_CA_pkey()
         cert = create_certificate(
@@ -192,24 +131,35 @@ class CaState:
             not_after=date + datetime.timedelta(minutes=1),
             serial=nonce)
         obj = Certificate.from_cert(state='Valid', cert=cert)
-        # self._save_entity_state(entity=cert.fingerprint(hashes.SHA256()),
-        #                         data=_serialize(obj))
-        self._save_entity_state(entity=str(cert.serial_number),
-                                data=_serialize(obj))
-        return obj.certificate_string
+        self._save_entity_state(entity=str(cert.serial_number), data=_serialize(obj))
+        return obj.certificate_string, str(cert.serial_number)
 
     def get_certificate(self, serial: str):
+        LOGGER.debug("[get_certificate] Input data: [{}] => {}".format('serial', serial))
         obj = _deserialize(self._load_entity_state(entity=serial))
         return obj.certificate_string
 
     def revoke_certificate(self, serial: str):
+        LOGGER.debug("[revoke_certificate] Input data: [{}] => {}".format('serial', serial))
         obj = _deserialize(self._load_entity_state(entity=serial))
         obj.revoke()
-        # self._save_entity_state(entity=obj.fingerprint,
-        #                         data=_serialize(obj))
         self._save_entity_state(entity=str(obj.serial_number),
                                 data=_serialize(obj))
 
     def check_status(self, serial: str):
+        LOGGER.debug("[check_status] Input data: [{}] => {}".format('serial', serial))
         obj = _deserialize(self._load_entity_state(entity=serial))
         return obj.state
+
+    def _load_CA_cert(self):
+        data = self._load_entity_state('CA_Root')
+        if data is None:
+            raise InternalError("CA Root certificate not found. Init first")
+        data = _deserialize(data)
+        return deserialize_certificate(data.certificate_string)
+
+    def _load_CA_pkey(self):
+        data = self._load_entity_state('CA_PKey')
+        if data is None:
+            raise InternalError("CA keys not found. Init first")
+        return deserialize_pkey(data, PWD)

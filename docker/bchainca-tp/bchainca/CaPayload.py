@@ -7,18 +7,23 @@ from sawtooth_sdk.processor.exceptions import InvalidTransaction
 class CaPayload(object):
 
     def __init__(self, payload):
-        action, date, _ = payload.decode().split("|")
+        t = payload.decode().split("|")
 
-        if action not in ('create','init', 'get', 'revoke', 'status'):
+        action = t[0]
+
+        if action not in ('create','init', 'get', 'list_approve', 'list_my', 'approve', 'revoke', 'status'):
             raise InvalidTransaction('Invalid action: {}'.format(action))
 
-        if action in ('create', 'init'):
-            self._value = _.encode('utf-8')
+        if action == 'init':
+            self._value = t[2].encode('utf-8')
+            self._csr = t[3].encode('utf-8')
+        elif action == 'create':
+            self._value = t[2].encode('utf-8')
         else:
-            self._serial = _
+            self._serial = t[2]
 
         self._action = action
-        self._date = dateutil.parser.parse(date)
+        self._date = dateutil.parser.parse(t[1])
 
     @property
     def action(self):
@@ -27,6 +32,10 @@ class CaPayload(object):
     @property
     def value(self):
         return self._value
+
+    @property
+    def csr(self):
+        return self._csr
 
     @property
     def date(self):

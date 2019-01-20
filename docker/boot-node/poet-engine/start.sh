@@ -18,4 +18,4 @@ while [ ! -f /poet-shared/${validator}/keys/validator.priv ]; do sleep 1; done &
 
 cp -a /poet-shared/${validator}/keys /etc/sawtooth 
 poet registration create -k /etc/sawtooth/keys/validator.priv -o /poet-shared/poet.batch
-poet-engine -C tcp://${validator}:5050 --component tcp://${validator}:4004 
+poet-engine -C tcp://${validator}:5050 --component tcp://${validator}:4004 -v

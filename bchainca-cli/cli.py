@@ -169,6 +169,155 @@ def add_get_parser(subparsers, parent_parser):
         help='set time, in seconds, to wait for game to commit')
 
 
+def add_list_approve_parser(subparsers, parent_parser):
+    parser = subparsers.add_parser(
+        'list_approve',
+        help='Get certificate status by serial number',
+        description='Get certificate status by serial number',
+        parents=[parent_parser])
+
+    parser.add_argument(
+        '--url',
+        type=str,
+        help='specify URL of REST API')
+
+    parser.add_argument(
+        '--username',
+        type=str,
+        help="identify name of user's private key file")
+
+    parser.add_argument(
+        '--key-dir',
+        type=str,
+        help="identify directory of user's private key file")
+
+    parser.add_argument(
+        '--auth-user',
+        type=str,
+        help='specify username for authentication if REST API '
+             'is using Basic Auth')
+
+    parser.add_argument(
+        '--auth-password',
+        type=str,
+        help='specify password for authentication if REST API '
+             'is using Basic Auth')
+
+    parser.add_argument(
+        '--disable-client-validation',
+        action='store_true',
+        default=False,
+        help='disable client validation')
+
+    parser.add_argument(
+        '--wait',
+        nargs='?',
+        const=sys.maxsize,
+        type=int,
+        help='set time, in seconds, to wait for game to commit')
+
+
+def add_approve_parser(subparsers, parent_parser):
+    parser = subparsers.add_parser(
+        'approve',
+        help='Get certificate status by serial number',
+        description='Get certificate status by serial number',
+        parents=[parent_parser])
+
+    parser.add_argument(
+        'signer',
+        type=str,
+        help='unique identifier for the new game')
+
+    parser.add_argument(
+        '--url',
+        type=str,
+        help='specify URL of REST API')
+
+    parser.add_argument(
+        '--username',
+        type=str,
+        help="identify name of user's private key file")
+
+    parser.add_argument(
+        '--key-dir',
+        type=str,
+        help="identify directory of user's private key file")
+
+    parser.add_argument(
+        '--auth-user',
+        type=str,
+        help='specify username for authentication if REST API '
+        'is using Basic Auth')
+
+    parser.add_argument(
+        '--auth-password',
+        type=str,
+        help='specify password for authentication if REST API '
+        'is using Basic Auth')
+
+    parser.add_argument(
+        '--disable-client-validation',
+        action='store_true',
+        default=False,
+        help='disable client validation')
+
+    parser.add_argument(
+        '--wait',
+        nargs='?',
+        const=sys.maxsize,
+        type=int,
+        help='set time, in seconds, to wait for game to commit')
+
+
+def add_list_my_parser(subparsers, parent_parser):
+    parser = subparsers.add_parser(
+        'list_my',
+        help='List certificate by signer',
+        description='List certificate by signer',
+        parents=[parent_parser])
+
+    parser.add_argument(
+        '--url',
+        type=str,
+        help='specify URL of REST API')
+
+    parser.add_argument(
+        '--username',
+        type=str,
+        help="identify name of user's private key file")
+
+    parser.add_argument(
+        '--key-dir',
+        type=str,
+        help="identify directory of user's private key file")
+
+    parser.add_argument(
+        '--auth-user',
+        type=str,
+        help='specify username for authentication if REST API '
+             'is using Basic Auth')
+
+    parser.add_argument(
+        '--auth-password',
+        type=str,
+        help='specify password for authentication if REST API '
+             'is using Basic Auth')
+
+    parser.add_argument(
+        '--disable-client-validation',
+        action='store_true',
+        default=False,
+        help='disable client validation')
+
+    parser.add_argument(
+        '--wait',
+        nargs='?',
+        const=sys.maxsize,
+        type=int,
+        help='set time, in seconds, to wait for game to commit')
+
+
 def add_status_parser(subparsers, parent_parser):
     parser = subparsers.add_parser(
         'status',
@@ -585,8 +734,11 @@ def create_parser(prog_name):
     add_simple_parser(subparsers, parent_parser)
     add_init_parser(subparsers, parent_parser)
     add_get_parser(subparsers, parent_parser)
+    add_list_approve_parser(subparsers, parent_parser)
+    add_approve_parser(subparsers, parent_parser)
     add_revoke_parser(subparsers, parent_parser)
     add_status_parser(subparsers, parent_parser)
+    add_list_my_parser(subparsers, parent_parser)
     add_list_parser(subparsers, parent_parser)
     add_show_parser(subparsers, parent_parser)
     add_take_parser(subparsers, parent_parser)
@@ -708,7 +860,30 @@ def do_create(args):
 
     print("Response: {}".format(response))
 
-    client.subscribe('create', is_write_to_file=True)
+    # filename = client.subscribe('create', is_write_to_file=True)
+    # print('File {} created'.format(filename))
+
+
+def do_list_my(args):
+    url = _get_url(args)
+    keyfile = _get_keyfile(args)
+    auth_user, auth_password = _get_auth_info(args)
+
+    client = CaClient(base_url=url, keyfile=keyfile)
+
+    if args.wait and args.wait > 0:
+        response = client.list_my(
+            wait=args.wait,
+            auth_user=auth_user,
+            auth_password=auth_password)
+    else:
+        response = client.list_my(
+            auth_user=auth_user,
+            auth_password=auth_password)
+
+    print("Response: {}".format(response))
+
+    client.subscribe('list_my')
 
 
 def do_get(args):
@@ -731,7 +906,8 @@ def do_get(args):
 
     print("Response: {}".format(response))
 
-    client.subscribe('get', is_write_to_file=True, file_name="cert_{}.pem".format(serial))
+    filename = client.subscribe('get', is_write_to_file=True, file_name="cert_{}.pem".format(serial))
+    print('File {} created'.format(filename))
 
 
 def do_revoke(args):
@@ -780,6 +956,51 @@ def do_status(args):
     client.subscribe('status')
 
 
+def do_approve(args):
+    signer = args.signer
+    url = _get_url(args)
+    keyfile = _get_keyfile(args)
+    auth_user, auth_password = _get_auth_info(args)
+
+    client = CaClient(base_url=url, keyfile=keyfile)
+
+    if args.wait and args.wait > 0:
+        response = client.approve(
+            signer, wait=args.wait,
+            auth_user=auth_user,
+            auth_password=auth_password)
+    else:
+        response = client.approve(
+            signer, auth_user=auth_user,
+            auth_password=auth_password)
+
+    print("Response: {}".format(response))
+
+    # client.subscribe('create', is_write_to_file=True)
+
+
+def do_list_approve(args):
+    url = _get_url(args)
+    keyfile = _get_keyfile(args)
+    auth_user, auth_password = _get_auth_info(args)
+
+    client = CaClient(base_url=url, keyfile=keyfile)
+
+    if args.wait and args.wait > 0:
+        response = client.list_approve(
+            wait=args.wait,
+            auth_user=auth_user,
+            auth_password=auth_password)
+    else:
+        response = client.list_approve(
+            auth_user=auth_user,
+            auth_password=auth_password)
+
+    print("Response: {}".format(response))
+
+    client.subscribe('list_approve')
+
+
 def do_init(args):
     # name = args.name
     pkey = create_key_pair()
@@ -790,6 +1011,16 @@ def do_init(args):
          encryption_algorithm=serialization.BestAvailableEncryption(b'passw'),
      ).decode('utf-8')
 
+    csr = create_cert_request(pkey,
+                              C=u'RU',
+                              ST=u'Tatarstan',
+                              L=u'Innopolis',
+                              O=u'SNE',
+                              CN=u'demo CA',
+                              emailAddress=u'admin@os3.su')
+
+    csr = csr.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+
     url = _get_url(args)
     keyfile = _get_keyfile(args)
     auth_user, auth_password = _get_auth_info(args)
@@ -798,12 +1029,12 @@ def do_init(args):
 
     if args.wait and args.wait > 0:
         response = client.init(
-            data, wait=args.wait,
+            data, csr, wait=args.wait,
             auth_user=auth_user,
             auth_password=auth_password)
     else:
         response = client.init(
-            data, auth_user=auth_user,
+            data, csr, auth_user=auth_user,
             auth_password=auth_password)
 
     print("Response: {}".format(response))
@@ -947,10 +1178,12 @@ def main(prog_name=os.path.basename(sys.argv[0]), args=None):
         do_revoke(args)
     elif args.command == 'status':
         do_status(args)
-    # elif args.command == 'list':
-    #     do_list(args)
-    # elif args.command == 'show':
-    #     do_show(args)
+    elif args.command == 'list_my':
+        do_list_my(args)
+    elif args.command == 'list_approve':
+        do_list_approve(args)
+    elif args.command == 'approve':
+        do_approve(args)
     # elif args.command == 'take':
     #     do_take(args)
     # elif args.command == 'delete':

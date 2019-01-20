@@ -26,4 +26,4 @@ WORKDIR /bchainca
 
 COPY bchainca/ /bchainca/
 
-CMD python3 main.py -C tcp://$validator:4004
+CMD python3 main.py -vvv -C tcp://$validator:4004
