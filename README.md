@@ -2,15 +2,6 @@
 SNE RP1 Blockchain PKI on Sawtooth
 
 # Run Sawtooth test network
-(Optional) Install Sawtooth core packagies on host machine:
-
-$ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8AA7AF1F1091A5FD
-
-$ sudo add-apt-repository 'deb [arch=amd64] http://repo.sawtooth.me/ubuntu/bumper/stable xenial universe'
-
-$ sudo apt update
-
-$ apt install sawtooth python3-sawtooth-*
 
 Start the first node:
 
@@ -21,6 +12,16 @@ Start other node (PoET engine rqured at least three additional nodes:
 $ docker-compose -f node-0.yaml -f node-1.yaml -f node-2.yaml up -d
 
 Each node contains several services: validator, rest-api and set of transaction processors - settings, identity, poet engine, poet validator registry, and bchainca. 
+
+Install Sawtooth core packagies on host machine (for using sawtooth tool to create users and set permissions):
+
+$ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8AA7AF1F1091A5FD
+
+$ sudo add-apt-repository 'deb [arch=amd64] http://repo.sawtooth.me/ubuntu/bumper/stable xenial universe'
+
+$ sudo apt update
+
+$ apt install sawtooth python3-sawtooth-*
 
 Create users transaction signing keys
 
