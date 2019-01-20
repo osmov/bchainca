@@ -21,7 +21,7 @@ $ sudo add-apt-repository 'deb [arch=amd64] http://repo.sawtooth.me/ubuntu/bumpe
 
 $ sudo apt update
 
-$ apt install sawtooth python3-sawtooth-*```
+$ apt install sawtooth python3-sawtooth-* ```
 
 Create users transaction signing keys
 
